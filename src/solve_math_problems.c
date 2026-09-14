@@ -20,7 +20,7 @@ char *str_remove_spaces(char *line) {
   return line;
 }
 
-bool parse_number_into(const char *line, NumberVec *vec) {
+bool parse_numbers_into(const char *line, NumberVec *vec) {
   const char *cursor = line;
   while (*cursor != '\0') {
     char *next;
@@ -30,6 +30,10 @@ bool parse_number_into(const char *line, NumberVec *vec) {
     if (errno == ERANGE) {
       fprintf(stderr, "Value too large, use a higher number type");
       return false;
+    }
+
+    if (next == cursor) {
+      break;
     }
 
     cursor = next;
@@ -50,7 +54,7 @@ void create_grid_from_file(FILE *file, uint64_t *out) {
   NumberVec v = {0};
 
   if (getline(&line, &linecapp, file) != -1) {
-    parse_number_into(line, &v);
+    parse_numbers_into(line, &v);
     width = v.size;
     row_num++;
   }
@@ -64,7 +68,7 @@ void create_grid_from_file(FILE *file, uint64_t *out) {
       continue;
     }
     size_t before = v.size;
-    parse_number_into(line, &v);
+    parse_numbers_into(line, &v);
     size_t tokens_this_row = v.size - before;
 
     if (tokens_this_row != width) {
@@ -77,11 +81,11 @@ void create_grid_from_file(FILE *file, uint64_t *out) {
 
   uint64_t sum = 0;
 
-  for (size_t i = 0; i < width; ++i) {
-    uint64_t rowSum = 0;
+  for (size_t col = 0; col < width; ++col) {
+    uint64_t rowSum = operators[col] == '*' ? 1 : 0;
     for (size_t row = 0; row < row_num; ++row) {
-      uint64_t num = v.data[row * width + i];
-      rowSum = operators[row] == '*' ? rowSum * num : rowSum + num;
+      uint64_t num = v.data[row * width + col];
+      rowSum = operators[col] == '*' ? rowSum * num : rowSum + num;
     }
     sum += rowSum;
   }
